@@ -152,6 +152,24 @@ def generate_question():
                 "original_error": str(e)
             }), 500
 
+@app.errorhandler(Exception)
+def handle_global_exception(e):
+    # 如果是 Flask 內建的 HTTP 異常（如 404, 405），直接返回原異常
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e
+
+    # 針對其他未預期錯誤，記錄詳細 Traceback 並回傳 JSON，以防 CORS 阻擋 HTML 錯誤頁面
+    import traceback
+    print("--- 偵測到全域未預期錯誤 ---")
+    traceback.print_exc()
+    
+    return jsonify({
+        "error": "伺服器內部發生未預期錯誤，請聯絡管理員。",
+        "details": str(e),
+        "traceback": traceback.format_exc()
+    }), 500
+
 if __name__ == '__main__':
     # 本地端開發預設使用 Port 5000 運行
     port = int(os.environ.get("PORT", 5000))
