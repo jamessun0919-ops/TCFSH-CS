@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國中數學幾何題目練習系統 - AI 幾何大師</title>
+    <!-- 引入 Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入 KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <!-- 引入 CSS 樣式 -->
+    <style>
+        :root {
+            /* 現代暗色/幾何藍調調色盤 */
+            --bg-main: #0b1329;
+            --bg-card: rgba(28, 37, 65, 0.7);
+            --bg-canvas: #0f172a;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            
+            --color-primary: #6366f1; /* 靛藍 */
+            --color-primary-hover: #4f46e5;
+            --color-accent: #38bdf8; /* 天藍 */
+            --color-accent-hover: #0ea5e9;
+            --color-accent-glow: rgba(56, 189, 248, 0.3);
+            
+            --color-success: #10b981; /* 翡翠綠 */
+            --color-success-bg: rgba(16, 185, 129, 0.1);
+            --color-success-border: rgba(16, 185, 129, 0.3);
+            --color-danger: #ef4444; /* 玫瑰紅 */
+            --color-danger-bg: rgba(239, 68, 68, 0.1);
+            --color-danger-border: rgba(239, 68, 68, 0.3);
+            
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            
+            --shadow-glow: 0 0 25px rgba(56, 189, 248, 0.12);
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-grow: 1;
+        }
+
+        /* 頂部 Header & API 設定 */
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-area h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f8fafc 30%, var(--color-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-area .badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 20px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--color-accent);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .api-config {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .api-config label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .api-config input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            border-radius: var(--radius-sm);
+            width: 220px;
+            transition: all var(--transition-speed);
+        }
+
+        .api-config input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+
+        /* 卡片共用樣式 (毛玻璃效果) */
+        .card {
+            background-color: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        /* 1. 控制面板 */
+        .control-panel {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .panel-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--color-accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .select-control {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            cursor: pointer;
+            outline: none;
+            transition: all var(--transition-speed);
+            width: 100%;
+        }
+
+        .select-control:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+
+        /* 段考多選核取方塊格線 */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.15);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .checkbox-label:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            accent-color: var(--color-accent);
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+        }
+
+        /* 按鈕樣式 */
+        .btn {
+            background: linear-gradient(135deg, var(--color-primary) 0%, #4338ca 100%);
+            border: none;
+            color: white;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+            background: linear-gradient(135deg, var(--color-primary-hover) 0%, #3730a3 100%);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-muted);
+            transform: translateY(-2px);
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+            box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
+        }
+
+        /* 2. 中間左右雙欄排版 */
+        .workspace {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+
+        .left-column {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 工程幾何藍圖畫布 */
+        .canvas-container {
+            background-color: var(--bg-canvas);
+            background-image: 
+                linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+                linear-gradient(rgba(56, 189, 248, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.015) 1px, transparent 1px);
+            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+            background-position: center;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: var(--radius-lg);
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), var(--shadow-glow);
+        }
+
+        .svg-wrapper {
+            width: 90%;
+            height: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .svg-wrapper svg {
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.3));
+            animation: svgDrawIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes svgDrawIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Blueprint Canvas Grid line center markers */
+        .canvas-container::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: rgba(56, 189, 248, 0.1);
+            top: 50%;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .canvas-container::after {
+            content: '';
+            position: absolute;
+            height: 100%;
+            width: 1px;
+            background: rgba(56, 189, 248, 0.1);
+            left: 50%;
+            top: 0;
+            pointer-events: none;
+        }
+
+        /* Loading 動畫覆蓋層 */
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(56, 189, 248, 0.1);
+            border-top: 3px solid var(--color-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loader-text {
+            color: var(--color-accent);
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 題目顯示區 */
+        .question-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .question-title {
+            font-size: 0.9rem;
+            color: var(--color-accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: var(--text-main);
+            white-space: pre-wrap;
+        }
+
+        /* 右欄選項區 */
+        .options-box {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .options-title {
+            font-size: 0.9rem;
+            color: var(--color-accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s ease-in-out;
+            user-select: none;
+        }
+
+        .option-card:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(56, 189, 248, 0.3);
+            transform: translateX(4px);
+        }
+
+        .option-card.selected {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .option-card.correct {
+            background: var(--color-success-bg) !important;
+            border-color: var(--color-success) !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .option-card.incorrect {
+            background: var(--color-danger-bg) !important;
+            border-color: var(--color-danger) !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+
+        .option-card.disabled {
+            cursor: not-allowed;
+        }
+
+        .option-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .option-card.selected .option-badge {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .option-card.correct .option-badge {
+            background: var(--color-success);
+            border-color: var(--color-success);
+        }
+
+        .option-card.incorrect .option-badge {
+            background: var(--color-danger);
+            border-color: var(--color-danger);
+        }
+
+        .option-content {
+            font-size: 1rem;
+            color: var(--text-main);
+            flex-grow: 1;
+        }
+
+        /* 詳解與解析 */
+        .explanation-box {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .explanation-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-badge {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .result-badge.correct {
+            background-color: var(--color-success-bg);
+            color: var(--color-success);
+            border: 1px solid var(--color-success-border);
+        }
+
+        .result-badge.incorrect {
+            background-color: var(--color-danger-bg);
+            color: var(--color-danger);
+            border: 1px solid var(--color-danger-border);
+        }
+
+        .explanation-title {
+            font-weight: 600;
+            color: var(--color-accent);
+        }
+
+        .explanation-text {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            color: #cbd5e1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 3. 下方儀表板 */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dashboard-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-accent);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .progress-bar-bg {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 6px;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        /* 歡迎與空狀態 */
+        .placeholder-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            gap: 15px;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* RWD 響應式調整 */
+        @media (max-width: 992px) {
+            .workspace {
+                flex-direction: column;
+            }
+            .left-column, .right-column {
+                flex: none;
+                width: 100%;
+            }
+            .canvas-container {
+                max-width: 500px;
+                margin: 0 auto;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+            .card {
+                padding: 16px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-actions {
+                justify-content: center;
+                width: 100%;
+            }
+            .dashboard-actions button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 頂端導覽列 -->
+    <header>
+        <div class="logo-area">
+            <h1>📐 AI 幾何大師 <span class="badge">MVP 國中幾何練習</span></h1>
+        </div>
+        <!-- 後端 API 網址設定 -->
+        <div class="api-config">
+            <label for="api-url-input">後端 API 網址：</label>
+            <input type="text" id="api-url-input" placeholder="預設 (同網域或 http://localhost:5000)">
+        </div>
+    </header>
+
+    <!-- 1. 上方：控制面板 -->
+    <section class="card control-panel">
+        <div class="panel-row">
+            <!-- 難度選擇 -->
+            <div class="form-group">
+                <label for="difficulty-select">
+                    🎯 選擇難度分級
+                </label>
+                <select id="difficulty-select" class="select-control">
+                    <option value="會考標準">會考標準（觀念直觀、難度適中）</option>
+                    <option value="學校段考">學校段考（複選單元、跨章節應用）</option>
+                    <option value="科學班甄選">科學班甄選（極高難度、進階定理）</option>
+                </select>
+            </div>
+            <!-- 單元選擇 (將依據難度動態切換單選/多選) -->
+            <div class="form-group" style="flex-grow: 2;">
+                <label id="topic-label">
+                    📚 選擇幾何單元
+                </label>
+                <div id="topics-container">
+                    <!-- JavaScript 將在此處動態生成 Select 下拉選單或 Checkbox 列表 -->
+                </div>
+            </div>
+        </div>
+        <!-- 產生按鈕 -->
+        <button id="generate-btn" class="btn">
+            ✨ 產生 AI 幾何題目
+        </button>
+    </section>
+
+    <!-- 2. 中間：左右雙欄 (Workspace) -->
+    <section class="workspace">
+        <!-- 左欄：圖形畫布與題目 -->
+        <div class="left-column">
+            <!-- SVG 工程畫布 -->
+            <div class="card canvas-container">
+                <!-- 預設載入動畫遮罩 -->
+                <div class="loader-overlay" id="loader-overlay">
+                    <div class="spinner"></div>
+                    <div class="loader-text" id="loader-text">AI 正在幾何世界中繪圖與命題...</div>
+                </div>
+                <!-- 幾何 SVG 展示區 -->
+                <div class="svg-wrapper" id="svg-display">
+                    <div class="placeholder-box" id="canvas-placeholder">
+                        <div class="placeholder-icon">📐</div>
+                        <p>點擊上方按鈕，AI 將即時繪製幾何圖形</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 題目內容 -->
+            <div class="card question-box" style="display: none;" id="question-card">
+                <div class="question-title">QUESTION / 題目敘述</div>
+                <div class="question-text" id="question-text">
+                    <!-- 題目載入 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 右欄：選項與詳解 -->
+        <div class="right-column">
+            <!-- 選項 -->
+            <div class="card options-box" style="display: none;" id="options-card">
+                <div class="options-title">OPTIONS / 選擇答案</div>
+                <div class="options-list" id="options-list">
+                    <!-- A, B, C, D 選項卡片 -->
+                    <div class="option-card" id="option-A" onclick="selectOption('A')">
+                        <div class="option-badge">A</div>
+                        <div class="option-content" id="option-content-A"></div>
+                    </div>
+                    <div class="option-card" id="option-B" onclick="selectOption('B')">
+                        <div class="option-badge">B</div>
+                        <div class="option-content" id="option-content-B"></div>
+                    </div>
+                    <div class="option-card" id="option-C" onclick="selectOption('C')">
+                        <div class="option-badge">C</div>
+                        <div class="option-content" id="option-content-C"></div>
+                    </div>
+                    <div class="option-card" id="option-D" onclick="selectOption('D')">
+                        <div class="option-badge">D</div>
+                        <div class="option-content" id="option-content-D"></div>
+                    </div>
+                </div>
+                <!-- 點擊確認 -->
+                <button id="submit-btn" class="btn" style="margin-top: 10px;" disabled>
+                    ✅ 提交答案
+                </button>
+
+                <!-- 詳解 (預設隱藏，作答完顯示) -->
+                <div class="explanation-box" id="explanation-box">
+                    <div class="explanation-header">
+                        <span class="result-badge" id="result-badge">答對了</span>
+                        <span class="explanation-title">📝 詳解與幾何推導</span>
+                    </div>
+                    <div class="explanation-text" id="explanation-text">
+                        <!-- 詳解載入 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右欄預設 Placeholder -->
+            <div class="card" id="workspace-placeholder" style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+                <div class="placeholder-box">
+                    <div class="placeholder-icon">🧠</div>
+                    <p>題目載入後，作答選項與數學詳解將在此顯示</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 下方：儀表板 (Dashboard) -->
+    <footer class="card dashboard">
+        <div class="dashboard-header">📊 幾何學習儀表板</div>
+        <div class="dashboard-content">
+            <!-- 數據卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-label">總作答題數</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-correct">0</div>
+                    <div class="stat-label">答對題數</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-accuracy">0%</div>
+                    <div class="stat-label">綜合正確率</div>
+                </div>
+            </div>
+            
+            <!-- 進度條 -->
+            <div class="progress-container" style="flex-grow: 1; padding: 0 10px;">
+                <div class="progress-header">
+                    <span>學習成就進度條</span>
+                    <span id="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="accuracy-progress"></div>
+                </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="dashboard-actions">
+                <button id="download-btn" class="btn btn-outline">
+                    💾 下載練習紀錄 (.md)
+                </button>
+                <button id="clear-btn" class="btn btn-outline btn-danger">
+                    🗑️ 清除歷史紀錄
+                </button>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- 引入 KaTeX JS 與自動解析擴充套件 -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+<!-- 前端應用程式邏輯 -->
+<script>
+    // 15 個幾何單元定義
+    const GEOMETRY_UNITS = {
+        "congruence": "全等性質",
+        "pythagorean": "畢氏定理",
+        "parallel_lines": "平行線性質",
+        "parallelogram": "平行四邊形",
+        "special_quadrilaterals": "特殊四邊形",
+        "proportional_segments": "比例線段",
+        "similarity": "相似形",
+        "similarity_advanced": "進階應用",
+        "point_line_circle": "點、線與圓",
+        "two_circles": "兩圓關係",
+        "circle_angles": "圓的相關角",
+        "proofs": "幾何證明",
+        "circumcenter": "外心",
+        "incenter": "內心",
+        "centroid": "重心"
+    };
+
+    // 應用程式狀態變數
+    let currentQuestionData = null;
+    let selectedAnswer = null;
+    let hasAnswered = false;
+
+    // DOM 元素選取
+    const difficultySelect = document.getElementById('difficulty-select');
+    const topicsContainer = document.getElementById('topics-container');
+    const topicLabel = document.getElementById('topic-label');
+    const generateBtn = document.getElementById('generate-btn');
+    const apiUrlInput = document.getElementById('api-url-input');
+
+    const loaderOverlay = document.getElementById('loader-overlay');
+    const loaderText = document.getElementById('loader-text');
+    const svgDisplay = document.getElementById('svg-display');
+    const canvasPlaceholder = document.getElementById('canvas-placeholder');
+    const questionCard = document.getElementById('question-card');
+    const questionText = document.getElementById('question-text');
+
+    const optionsCard = document.getElementById('options-card');
+    const workspacePlaceholder = document.getElementById('workspace-placeholder');
+    const submitBtn = document.getElementById('submit-btn');
+    const explanationBox = document.getElementById('explanation-box');
+    const resultBadge = document.getElementById('result-badge');
+    const explanationText = document.getElementById('explanation-text');
+
+    const downloadBtn = document.getElementById('download-btn');
+    const clearBtn = document.getElementById('clear-btn');
+
+    // 初始化設定
+    window.addEventListener('DOMContentLoaded', () => {
+        // 從 LocalStorage 載入先前儲存的 API 網址
+        const savedApiUrl = localStorage.getItem('geometry_api_url') || '';
+        apiUrlInput.value = savedApiUrl;
+
+        // 監聽難度變更
+        difficultySelect.addEventListener('change', renderTopicSelector);
+        
+        // 初始渲染主題選單
+        renderTopicSelector();
+        
+        // 載入學習儀表板數據
+        updateDashboard();
+
+        // 綁定按鈕點擊事件
+        generateBtn.addEventListener('click', generateQuestion);
+        submitBtn.addEventListener('click', checkAnswer);
+        downloadBtn.addEventListener('click', downloadPracticeRecord);
+        clearBtn.addEventListener('click', clearHistoryRecords);
+        
+        apiUrlInput.addEventListener('change', () => {
+            localStorage.setItem('geometry_api_url', apiUrlInput.value.trim());
+        });
+    });
+
+    // 根據難度動態生成單選 (Select) 或複選 (Checkbox) 區塊
+    function renderTopicSelector() {
+        const difficulty = difficultySelect.value;
+        topicsContainer.innerHTML = '';
+        
+        if (difficulty === '學校段考') {
+            topicLabel.innerHTML = '📚 選擇幾何單元 (可複選段考範圍)';
+            
+            const grid = document.createElement('div');
+            grid.className = 'checkbox-grid';
+            
+            Object.entries(GEOMETRY_UNITS).forEach(([key, name], idx) => {
+                const label = document.createElement('label');
+                label.className = 'checkbox-label';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'topics';
+                checkbox.value = name;
+                
+                // 預設勾選第一個
+                if (idx === 0) checkbox.checked = true;
+                
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(name));
+                grid.appendChild(label);
+            });
+            topicsContainer.appendChild(grid);
+        } else {
+            topicLabel.innerHTML = '📚 選擇幾何單元 (單選)';
+            
+            const select = document.createElement('select');
+            select.id = 'topic-select';
+            select.className = 'select-control';
+            
+            Object.entries(GEOMETRY_UNITS).forEach(([key, name]) => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            });
+            topicsContainer.appendChild(select);
+        }
+    }
+
+    // 呼叫後端 API 產生新題目
+    async function generateQuestion() {
+        const difficulty = difficultySelect.value;
+        let selectedTopics = [];
+        
+        if (difficulty === '學校段考') {
+            const checkboxes = document.querySelectorAll('input[name="topics"]:checked');
+            checkboxes.forEach(cb => selectedTopics.push(cb.value));
+            if (selectedTopics.length === 0) {
+                alert('請至少選擇一個幾何單元！');
+                return;
+            }
+        } else {
+            const select = document.getElementById('topic-select');
+            selectedTopics = select.value;
+        }
+
+        // 進入 Loading 狀態
+        setLoadingState(true);
+        resetWorkspace();
+
+        // 決定 API Endpoint 網址
+        let apiBase = apiUrlInput.value.trim();
+        if (!apiBase) {
+            // 預設偵測：本地開發使用 localhost，生產環境使用同網域的絕對路徑
+            apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5000'
+                : window.location.origin;
+        }
+        
+        // 去除結尾斜線
+        if (apiBase.endsWith('/')) {
+            apiBase = apiBase.slice(0, -1);
+        }
+        
+        const endpoint = `${apiBase}/api/generate-question`;
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    topic: selectedTopics,
+                    difficulty: difficulty
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || errData.details || '伺服器回應錯誤');
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // 保存題目狀態
+            currentQuestionData = data;
+            currentQuestionData.selectedTopics = selectedTopics;
+            
+            // 渲染介面
+            displayQuestion(data);
+            
+        } catch (error) {
+            console.error('產生題目出錯：', error);
+            svgDisplay.innerHTML = `
+                <div class="placeholder-box" style="color: var(--color-danger)">
+                    <div class="placeholder-icon">⚠️</div>
+                    <p>題目產生失敗，請確認後端伺服器運作正常與 API Key 已配置。</p>
+                    <p style="font-size: 0.8rem; margin-top: 5px;">錯誤訊息: ${error.message}</p>
+                </div>
+            `;
+        } finally {
+            setLoadingState(false);
+        }
+    }
+
+    // 控制 Loading 狀態與按鈕禁用
+    function setLoadingState(isLoading) {
+        if (isLoading) {
+            loaderOverlay.style.display = 'flex';
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '⚡ 題目計算中，請稍候...';
+        } else {
+            loaderOverlay.style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '✨ 產生 AI 幾何題目';
+        }
+    }
+
+    // 重設工作區 UI 狀態
+    function resetWorkspace() {
+        currentQuestionData = null;
+        selectedAnswer = null;
+        hasAnswered = false;
+        
+        svgDisplay.innerHTML = '';
+        questionCard.style.display = 'none';
+        optionsCard.style.display = 'none';
+        workspacePlaceholder.style.display = 'flex';
+        explanationBox.style.display = 'none';
+        
+        submitBtn.disabled = true;
+        
+        // 重設選項卡片樣式
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.className = 'option-card';
+        });
+    }
+
+    // 顯示取得的題目與圖形
+    function displayQuestion(data) {
+        // 隱藏右側 Placeholder，顯示工作卡片
+        workspacePlaceholder.style.display = 'none';
+        questionCard.style.display = 'block';
+        optionsCard.style.display = 'block';
+
+        // 安全地插入 SVG 圖形
+        if (data.svg_code && data.svg_code.trim().startsWith('<svg')) {
+            svgDisplay.innerHTML = data.svg_code;
+        } else {
+            svgDisplay.innerHTML = `
+                <div class="placeholder-box" style="color: var(--color-danger)">
+                    <div class="placeholder-icon">❌</div>
+                    <p>無法讀取有效的 SVG 圖形碼</p>
+                </div>
+            `;
+        }
+
+        // 帶入題目敘述與選項
+        questionText.innerHTML = data.question;
+        
+        document.getElementById('option-content-A').innerHTML = data.options.A;
+        document.getElementById('option-content-B').innerHTML = data.options.B;
+        document.getElementById('option-content-C').innerHTML = data.options.C;
+        document.getElementById('option-content-D').innerHTML = data.options.D;
+
+        // 呼叫 KaTeX 渲染公式
+        renderMathFormulae();
+    }
+
+    // 點擊選項時的互動
+    window.selectOption = function(letter) {
+        if (hasAnswered) return;
+
+        // 取消先前選擇的樣式
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+
+        // 設定目前點擊的選項為 Selected
+        const card = document.getElementById(`option-${letter}`);
+        card.classList.add('selected');
+        selectedAnswer = letter;
+
+        // 啟用提交按鈕
+        submitBtn.disabled = false;
+    };
+
+    // 檢查答案是否正確
+    function checkAnswer() {
+        if (!currentQuestionData || !selectedAnswer || hasAnswered) return;
+
+        hasAnswered = true;
+        submitBtn.disabled = true;
+        
+        const correctAnswer = currentQuestionData.answer.trim().toUpperCase();
+        const userAnswer = selectedAnswer.toUpperCase();
+        const isCorrect = userAnswer === correctAnswer;
+
+        // 變更選項卡片樣式以給予視覺反饋
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.classList.add('disabled');
+            const letter = card.id.split('-')[1];
+            
+            if (letter === correctAnswer) {
+                card.classList.add('correct'); // 正確答案顯示綠色
+            }
+            if (letter === userAnswer && !isCorrect) {
+                card.classList.add('incorrect'); // 點錯的顯示紅色
+            }
+        });
+
+        // 顯示詳解區
+        explanationBox.style.display = 'flex';
+        explanationText.innerHTML = currentQuestionData.explanation;
+
+        if (isCorrect) {
+            resultBadge.textContent = '答對了！';
+            resultBadge.className = 'result-badge correct';
+        } else {
+            resultBadge.textContent = `答錯了！正確答案是 (${correctAnswer})`;
+            resultBadge.className = 'result-badge incorrect';
+        }
+
+        // 即時寫入 LocalStorage
+        saveRecordToHistory(isCorrect);
+        
+        // 渲染詳解內的 KaTeX 公式
+        renderMathFormulae();
+        
+        // 更新儀表板
+        updateDashboard();
+    }
+
+    // 呼叫 KaTeX 自動解析器解析頁面上的公式
+    function renderMathFormulae() {
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        }
+    }
+
+    // 將每次練習存入 LocalStorage
+    function saveRecordToHistory(isCorrect) {
+        const history = JSON.parse(localStorage.getItem('geometry_practice_history') || '[]');
+        
+        // 取出選取的單元名稱字串
+        const topicString = Array.isArray(currentQuestionData.selectedTopics) 
+            ? currentQuestionData.selectedTopics.join(', ')
+            : String(currentQuestionData.selectedTopics);
+
+        const newRecord = {
+            date: new Date().toISOString(),
+            topics: topicString,
+            difficulty: currentQuestionData.difficulty || difficultySelect.value,
+            question: currentQuestionData.question,
+            options: currentQuestionData.options,
+            correctAnswer: currentQuestionData.answer,
+            userChoice: selectedAnswer,
+            correct: isCorrect,
+            explanation: currentQuestionData.explanation
+        };
+
+        history.push(newRecord);
+        localStorage.setItem('geometry_practice_history', JSON.stringify(history));
+    }
+
+    // 更新儀表板統計數值
+    function updateDashboard() {
+        const history = JSON.parse(localStorage.getItem('geometry_practice_history') || '[]');
+        const total = history.length;
+        const correct = history.filter(item => item.correct).length;
+        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-correct').textContent = correct;
+        document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+        document.getElementById('progress-percentage').textContent = `${accuracy}%`;
+        
+        // 更新進度條寬度
+        const progressBar = document.getElementById('accuracy-progress');
+        progressBar.style.width = `${accuracy}%`;
+    }
+
+    // 清除歷史紀錄
+    function clearHistoryRecords() {
+        if (confirm('確定要清除所有練習歷史紀錄嗎？清除後將無法復原。')) {
+            localStorage.removeItem('geometry_practice_history');
+            updateDashboard();
+            alert('紀錄已成功清除！');
+        }
+    }
+
+    // 匯出 Markdown 格式歷史紀錄並觸發下載
+    function downloadPracticeRecord() {
+        const history = JSON.parse(localStorage.getItem('geometry_practice_history') || '[]');
+        if (history.length === 0) {
+            alert('目前沒有練習紀錄可供下載，請先進行幾何挑戰！');
+            return;
+        }
+
+        let markdownContent = `# 📐 國中數學幾何題目練習學習紀錄\n\n`;
+        markdownContent += `> 📊 匯出時間：${new Date().toLocaleString('zh-TW')}\n\n`;
+
+        // 學習成效總覽表格
+        const total = history.length;
+        const correct = history.filter(item => item.correct).length;
+        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        markdownContent += `## 一、 學習成效總覽\n\n`;
+        markdownContent += `| 總練習題數 | 答對題數 | 答錯題數 | 綜合正確率 |\n`;
+        markdownContent += `| :---: | :---: | :---: | :---: |\n`;
+        markdownContent += `| ${total} | ${correct} | ${total - correct} | ${accuracy}% |\n\n`;
+
+        markdownContent += `## 二、 錯題與練習歷史明細\n\n`;
+
+        history.forEach((record, index) => {
+            const statusEmoji = record.correct ? '✅ 答對' : '❌ 答錯';
+            markdownContent += `### 📝 題目 ${index + 1}：【${record.topics}】 (${record.difficulty})\n`;
+            markdownContent += `- **練習時間**：${new Date(record.date).toLocaleString('zh-TW')}\n`;
+            markdownContent += `- **答題結果**：${statusEmoji}\n`;
+            markdownContent += `- **你的選擇**：(${record.userChoice}) ｜ **正確答案**：(${record.correctAnswer.trim().toUpperCase()})\n\n`;
+            
+            // 題目內容（因 markdown 換行縮排處理）
+            markdownContent += `#### 📌 題目敘述：\n${record.question}\n\n`;
+            
+            // 選項
+            markdownContent += `#### 🔠 選項：\n`;
+            Object.entries(record.options).forEach(([key, value]) => {
+                markdownContent += `- **(${key})**：${value}\n`;
+            });
+            markdownContent += `\n`;
+
+            // 詳解
+            markdownContent += `#### 💡 詳解與解題過程：\n${record.explanation}\n\n`;
+            markdownContent += `---\n\n`;
+        });
+
+        // 建立 Blob 與觸發下載
+        const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        
+        // 格式化檔名 (幾何練習紀錄_YYYY-MM-DD.md)
+        const dateStr = new Date().toISOString().slice(0, 10);
+        downloadLink.setAttribute('download', `幾何練習紀錄_${dateStr}.md`);
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+</body>
+</html>
