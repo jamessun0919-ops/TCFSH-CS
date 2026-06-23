@@ -741,14 +741,9 @@
 
 <div class="container">
     <!-- 頂端導覽列 -->
-    <header>
+    <header style="justify-content: center; text-align: center;">
         <div class="logo-area">
             <h1>📐 AI 幾何大師 <span class="badge">MVP 國中幾何練習</span></h1>
-        </div>
-        <!-- 後端 API 網址設定 -->
-        <div class="api-config">
-            <label for="api-url-input">後端 API 網址：</label>
-            <input type="text" id="api-url-input" placeholder="預設 (同網域或 http://localhost:5000)">
         </div>
     </header>
 
@@ -940,7 +935,6 @@
     const topicsContainer = document.getElementById('topics-container');
     const topicLabel = document.getElementById('topic-label');
     const generateBtn = document.getElementById('generate-btn');
-    const apiUrlInput = document.getElementById('api-url-input');
 
     const loaderOverlay = document.getElementById('loader-overlay');
     const loaderText = document.getElementById('loader-text');
@@ -961,10 +955,6 @@
 
     // 初始化設定
     window.addEventListener('DOMContentLoaded', () => {
-        // 從 LocalStorage 載入先前儲存的 API 網址
-        const savedApiUrl = localStorage.getItem('geometry_api_url') || '';
-        apiUrlInput.value = savedApiUrl;
-
         // 監聽難度變更
         difficultySelect.addEventListener('change', renderTopicSelector);
         
@@ -979,10 +969,6 @@
         submitBtn.addEventListener('click', checkAnswer);
         downloadBtn.addEventListener('click', downloadPracticeRecord);
         clearBtn.addEventListener('click', clearHistoryRecords);
-        
-        apiUrlInput.addEventListener('change', () => {
-            localStorage.setItem('geometry_api_url', apiUrlInput.value.trim());
-        });
     });
 
     // 根據難度動態生成單選 (Select) 或複選 (Checkbox) 區塊
@@ -1051,24 +1037,10 @@
         setLoadingState(true);
         resetWorkspace();
 
-        // 決定 API Endpoint 網址
-        let apiBase = apiUrlInput.value.trim();
-        if (apiBase) {
-            // 如果輸入的網址沒有 http:// 或 https:// 協定開頭，自動補上 https://
-            if (!/^https?:\/\//i.test(apiBase)) {
-                apiBase = 'https://' + apiBase;
-            }
-        } else {
-            // 預設偵測：本地開發使用 localhost，生產環境使用同網域的絕對路徑
-            apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:5000'
-                : window.location.origin;
-        }
-        
-        // 去除結尾斜線
-        if (apiBase.endsWith('/')) {
-            apiBase = apiBase.slice(0, -1);
-        }
+        // 決定 API Endpoint 網址（本地開發使用 localhost，上線部署固定使用您的 Render 後端網址）
+        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://tcfsh-cs.onrender.com';
         
         const endpoint = `${apiBase}/api/generate-question`;
 
