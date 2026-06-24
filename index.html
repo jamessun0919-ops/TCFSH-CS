@@ -349,6 +349,12 @@
             animation: svgDrawIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        /* 🔧 [開發者除錯/使用者補充] 強制 SVG 文字為高對比度亮色，避免 AI 生成黑色字體 */
+        .svg-wrapper svg text {
+            fill: #f8fafc !important;
+            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+
         @keyframes svgDrawIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
@@ -1037,8 +1043,11 @@
         setLoadingState(true);
         resetWorkspace();
 
-        // 決定 API Endpoint 網址（本地開發使用 localhost，上線部署固定使用您的 Render 後端網址）
-        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        // 決定 API Endpoint 網址（本地開發使用 localhost/file 協議，上線部署使用 Render 後端網址）
+        const apiBase = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.hostname === '' || 
+                        window.location.protocol === 'file:'
             ? 'http://localhost:5000'
             : 'https://tcfsh-cs.onrender.com';
         

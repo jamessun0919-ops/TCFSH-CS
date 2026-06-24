@@ -4,3 +4,6 @@ __pycache__/
 .vscode/
 .idea/
 *.md.bak
+GeminiKey.txt
+debug/
+題目測試/
